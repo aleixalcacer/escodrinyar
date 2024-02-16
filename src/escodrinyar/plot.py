@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Callable
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -156,5 +156,13 @@ class Plot():
             cross: bool = True,
              ):
         plot = Plot(self.splot.pair(x, y, wrap, cross))
+        plot.rc_params = self.rc_params
+        return plot
+
+    def label(self, *,
+        title: str | None = None,
+        legend: str | None = None,
+        **variables: str | Callable[[str], str]):
+        plot = Plot(self.splot.label(title=title, legend=legend, **variables))
         plot.rc_params = self.rc_params
         return plot
