@@ -1,8 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-
 from seaborn._marks.area import AreaBase
-
 from seaborn._marks.base import (
     Mark,
     Mappable,
@@ -11,8 +9,8 @@ from seaborn._marks.base import (
     MappableColor,
     document_properties,
 )
-
 import scipy
+
 
 @document_properties
 @dataclass

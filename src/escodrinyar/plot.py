@@ -1,4 +1,7 @@
+from typing import Any
+
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import io
 import base64
 from seaborn.objects import Plot as SeabornPlot
@@ -7,7 +10,6 @@ from seaborn._core.typing import (
     VariableSpec,
     VariableSpecList,
     OrderSpec,
-    Default,
 )
 from seaborn.objects import Mark, Stat, Move
 import matplotlib.gridspec as gridspec
@@ -47,12 +49,11 @@ class Layout:
             plot_ncols = ncols // len(row)
             for j, plot in enumerate(row):
                 sfig = fig.add_subfigure(gs[i, j * plot_ncols:(j + 1) * plot_ncols])
-                ax = sfig.add_subplot(111)
+                with mpl.rc_context(plot.rc_params):
+                    l = plot.splot.on(sfig).plot()
+                    legend = l._legend_contents
 
-                l = plot.splot.on(ax).plot()
-                legend = l._legend_contents
-
-                sfig.legends = []
+                    sfig.legends = []
 
         fig.legends = []
 
@@ -85,6 +86,7 @@ class Plot():
         if splot is None:
             splot = SeabornPlot(*args, data=data, **variables)
         self.splot = splot
+        self.rc_params = {}
 
     def __add__(self, other):
         if isinstance(other, Plot):
@@ -92,12 +94,21 @@ class Plot():
         else:
             return Layout([[self]]) + other
 
+    def __or__(self, other):
+        if isinstance(other, Plot):
+            return Layout([[self]]) | Layout([[other]])
+        else:
+            return Layout([[self]]) | other
+
     def __mul__(self, other):
         if isinstance(other, Plot):
             # TODO: check that the plots have the same data and variables
             splot = self.splot._clone()
             splot._layers.extend(other.splot._layers)
-            return Plot(splot)
+            self.rc_params = {**self.rc_params, **other.rc_params}
+            plot = Plot(splot.theme(self.rc_params))
+            plot.rc_params = self.rc_params
+            return plot
         else:
             raise ValueError("Can only multiply Plot by Plot")
 
@@ -114,4 +125,36 @@ class Plot():
         data: DataSource = None,
         **variables: VariableSpec,
     ):
-        return Plot(self.splot.add(mark, *transforms, orient=orient, legend=legend, label=label, data=data, **variables))
+        plot = Plot(self.splot.add(mark, *transforms, orient=orient, legend=legend, label=label, data=data, **variables))
+        plot.rc_params = self.rc_params
+        return plot
+
+    def theme(
+            self,
+            config: dict[str, Any]
+    ):
+        plot = Plot(self.splot.theme(self.rc_params))
+        plot.rc_params = {**self.rc_params, **config}
+        return plot
+
+    def facet(
+            self,
+            col: VariableSpec = None,
+            row: VariableSpec = None,
+            order: OrderSpec | dict[str, OrderSpec] = None,
+            wrap: int | None = None,
+    ):
+        plot = Plot(self.splot.facet(col, row, order, wrap))
+        plot.rc_params = self.rc_params
+        return plot
+
+    def pair(
+            self,
+            x: VariableSpecList = None,
+            y: VariableSpecList = None,
+            wrap: int | None = None,
+            cross: bool = True,
+             ):
+        plot = Plot(self.splot.pair(x, y, wrap, cross))
+        plot.rc_params = self.rc_params
+        return plot

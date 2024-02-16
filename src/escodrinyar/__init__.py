@@ -1,3 +1,4 @@
 from .plot import Plot, Layout
-from .marks import Polygon, ConvexHull
-from .stats import Agg2d
+from .marks.area import Polygon, ConvexHull
+from .marks.rect import Rect, Tile
+from .stats.aggregation import Agg2d
