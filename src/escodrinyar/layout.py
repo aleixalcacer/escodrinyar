@@ -13,6 +13,7 @@ from seaborn.objects import Mark, Stat, Move
 from typing import Any, Callable
 import base64
 
+import seaborn as sns
 
 class Layout:
     def __init__(self, layout):
@@ -20,7 +21,6 @@ class Layout:
         _ = self.opts()
 
     def __add__(self, other):
-        # print other class
         if isinstance(other, Plot):
             return self + Layout([[other]])
         else:
@@ -51,6 +51,7 @@ class Layout:
         with plt.ioff():
             fig = plt.figure(constrained_layout=True, figsize=self.figsize)
 
+
             gs = fig.add_gridspec(
                 nrows,
                 ncols,
@@ -64,31 +65,23 @@ class Layout:
                     sfig = fig.add_subfigure(gs[i, j * plot_ncols:(j + 1) * plot_ncols])
                     with mpl.rc_context(plot.rc_params):
                         l = plot.splot.on(sfig).plot()
-                        legend = l._legend_contents
+                        make_legend(sfig, l._legend_contents)
 
-                        sfig.legends = []
 
             fig.legends = []
 
             return fig
 
     def _repr_png_(self):
-        return self._repr_('png')
-
-    def _repr_svg_(self):
-        return self._repr_('svg')
-
-    def _repr_(self, format: str = 'png'):
         fig = self.plot()
         buffer = io.BytesIO()
-        fig.savefig(buffer, format=format)
+        fig.savefig(buffer, format="png")
         buffer.seek(0)
         image = buffer.getvalue()
         buffer.close()
         graphic = base64.b64encode(image).decode('utf-8')
         plt.close(fig)
         return graphic
-
 
     def opts(self, figsize=(5, 5), width_ratios=None, height_ratios=None):
         self.figsize = figsize
@@ -136,10 +129,6 @@ class Plot():
 
     def _repr_png_(self):
         return Layout([[self]])._repr_png_()
-
-    def _repr_svg_(self):
-        return Layout([[self]])._repr_svg_()
-
 
     def add(
         self,
@@ -206,3 +195,47 @@ class Plot():
 
     def opts(self, figsize=(5, 5)):
         return Layout([[self]]).opts(figsize)
+
+
+def make_legend(sfig, legend_contents):
+    merged_contents = {}
+    for key, new_artists, labels in legend_contents:
+        # Key is (name, id); we need the id to resolve variable uniqueness,
+        # but will need the name in the next step to title the legend
+        if key not in merged_contents:
+            # Matplotlib accepts a tuple of artists and will overlay them
+            new_artist_tuples = [tuple([a]) for a in new_artists]
+            merged_contents[key] = new_artist_tuples, labels
+        else:
+            existing_artists = merged_contents[key][0]
+            for i, new_artist in enumerate(new_artists):
+                existing_artists[i] += tuple([new_artist])
+
+    # When using pyplot, an "external" legend won't be shown, so this
+    # keeps it inside the axes (though still attached to the figure)
+    # This is necessary because matplotlib layout engines currently don't
+    # support figure legends — ideally this will change.
+
+    # get last axes
+    ax = sfig.get_axes()[-1]
+
+    base_legend = None
+    for (name, _), (handles, labels) in merged_contents.items():
+
+        legend = mpl.legend.Legend(
+            ax,
+            handles,  # type: ignore  # matplotlib/issues/26639
+            labels,
+            title=name
+        )
+
+        if base_legend:
+            # Matplotlib has no public API for this so it is a bit of a hack.
+            # Ideally we'd define our own legend class with more flexibility,
+            # but that is a lot of work!
+            base_legend_box = base_legend.get_children()[0]
+            this_legend_box = legend.get_children()[0]
+            base_legend_box.get_children().extend(this_legend_box.get_children())
+        else:
+            base_legend = legend
+            sfig.legends.append(legend)
