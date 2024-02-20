@@ -8,3 +8,10 @@ wheels/
 
 # venv
 .venv
+
+# Sphinx documentation
+docs/_build/
+docs/reference/generated/
+
+# PyCharm files
+.idea/

@@ -17,19 +17,29 @@ import scipy
 class Polygon(AreaBase, Mark):
     """
     A fill mark representing a polygon.
-
-    Examples
-    --------
-    .. include:: ../docstrings/objects.Polygon.rst
-
     """
-    color: MappableColor = Mappable("C0", )
-    alpha: MappableFloat = Mappable(.2, )
-    fill: MappableBool = Mappable(True, )
-    edgecolor: MappableColor = Mappable(depend="color", )
-    edgealpha: MappableFloat = Mappable(1, )
-    edgewidth: MappableFloat = Mappable(0, )
-    edgestyle: MappableFloat = Mappable("-", )
+
+    color: MappableColor = Mappable(
+        "C0",
+    )
+    alpha: MappableFloat = Mappable(
+        0.2,
+    )
+    fill: MappableBool = Mappable(
+        True,
+    )
+    edgecolor: MappableColor = Mappable(
+        depend="color",
+    )
+    edgealpha: MappableFloat = Mappable(
+        1,
+    )
+    edgewidth: MappableFloat = Mappable(
+        0,
+    )
+    edgestyle: MappableFloat = Mappable(
+        "-",
+    )
 
     def _get_verts(self, data, orient):
         dv = {"x": "y", "y": "x"}[orient]
@@ -44,19 +54,29 @@ class Polygon(AreaBase, Mark):
 class ConvexHull(Polygon, Mark):
     """
     A fill mark representing a convex hull around points.
-
-    Examples
-    --------
-    .. include:: ../docstrings/objects.Hull.rst
-
     """
-    color: MappableColor = Mappable("C0", )
-    alpha: MappableFloat = Mappable(.2, )
-    fill: MappableBool = Mappable(True, )
-    edgecolor: MappableColor = Mappable(depend="color", )
-    edgealpha: MappableFloat = Mappable(1, )
-    edgewidth: MappableFloat = Mappable(0, )
-    edgestyle: MappableFloat = Mappable("-", )
+
+    color: MappableColor = Mappable(
+        "C0",
+    )
+    alpha: MappableFloat = Mappable(
+        0.2,
+    )
+    fill: MappableBool = Mappable(
+        True,
+    )
+    edgecolor: MappableColor = Mappable(
+        depend="color",
+    )
+    edgealpha: MappableFloat = Mappable(
+        1,
+    )
+    edgewidth: MappableFloat = Mappable(
+        0,
+    )
+    edgestyle: MappableFloat = Mappable(
+        "-",
+    )
 
     def _standardize_coordinate_parameters(self, data, orient):
         hull = scipy.spatial.ConvexHull(data[["x", "y"]].to_numpy())

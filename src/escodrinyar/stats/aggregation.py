@@ -9,6 +9,7 @@ from seaborn._stats.base import Stat
 
 from seaborn._core.typing import Vector
 
+
 @dataclass
 class Agg2d(Stat):
     """
@@ -19,30 +20,23 @@ class Agg2d(Stat):
     func : str or callable
         Name of a :class:`pandas.Series` method or a vector -> scalar function.
 
-    See Also
-    --------
-    objects.Est : Aggregation with error bars.
-
-    Examples
-    --------
-    .. include:: ../docstrings/objects.Agg.rst
-
     """
+
     func: str | Callable[[Vector], float] = "mean"
     group_by_orient: ClassVar[bool] = False
 
     def __call__(
-        self, data: DataFrame, groupby: GroupBy, orient: str, scales: dict[str, Scale],
+        self,
+        data: DataFrame,
+        groupby: GroupBy,
+        orient: str,
+        scales: dict[str, Scale],
     ) -> DataFrame:
-
         agg_dict = {
             "x": self.func,
             "y": self.func,
         }
         res = (
-            groupby
-            .agg(data, agg_dict)
-            .dropna(subset=["x", "y"])
-            .reset_index(drop=True)
+            groupby.agg(data, agg_dict).dropna(subset=["x", "y"]).reset_index(drop=True)
         )
         return res

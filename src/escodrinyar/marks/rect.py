@@ -12,17 +12,14 @@ from seaborn._marks.base import (
     resolve_properties,
     resolve_color,
 )
-import numpy as np
 import matplotlib as mpl
 
 
 class RectBase:
     def _plot(self, split_gen, scales, orient):
-
         patches = defaultdict(list)
 
         for keys, data, ax in split_gen():
-
             kws = {}
             resolved = resolve_properties(self, keys, scales)
             data = self._standardize_coordinate_parameters(data, resolved, orient)
@@ -33,9 +30,7 @@ class RectBase:
             ymin = verts[:, 2].min()
             ymax = verts[:, 3].max()
 
-            ax.update_datalim(
-                [[xmin, ymin], [xmax, ymax]]
-            )
+            ax.update_datalim([[xmin, ymin], [xmax, ymax]])
 
             # TODO should really move this logic into resolve_color
             fc = resolve_color(self, keys, "", scales)
@@ -57,7 +52,6 @@ class RectBase:
                 patches[ax].append(mpl.patches.Polygon(verts_i, **kws))
 
         for ax, ax_patches in patches.items():
-
             for patch in ax_patches:
                 self._postprocess_artist(patch, ax, orient)
                 ax.add_patch(patch)
@@ -69,15 +63,15 @@ class RectBase:
         pass
 
     def _get_verts(self, data, orient):
-
         dv = {"x": "y", "y": "x"}[orient]
 
-        verts = data[[f"{dv}min", f"{dv}max", f"{orient}min", f"{orient}max"]].to_numpy()
+        verts = data[
+            [f"{dv}min", f"{dv}max", f"{orient}min", f"{orient}max"]
+        ].to_numpy()
 
         return verts
 
     def _legend_artist(self, variables, value, scales):
-
         keys = {v: value for v in variables}
         resolved = resolve_properties(self, keys, scales)
 
@@ -99,19 +93,29 @@ class RectBase:
 class Rect(RectBase, Mark):
     """
     A fill mark representing a rectangle.
-
-    Examples
-    --------
-    .. include:: ../docstrings/objects.Rectangle.rst
-
     """
-    color: MappableColor = Mappable("C0", )
-    alpha: MappableFloat = Mappable(.2, )
-    fill: MappableBool = Mappable(True, )
-    edgecolor: MappableColor = Mappable(depend="color", )
-    edgealpha: MappableFloat = Mappable(1, )
-    edgewidth: MappableFloat = Mappable(0, )
-    edgestyle: MappableFloat = Mappable("-", )
+
+    color: MappableColor = Mappable(
+        "C0",
+    )
+    alpha: MappableFloat = Mappable(
+        0.2,
+    )
+    fill: MappableBool = Mappable(
+        True,
+    )
+    edgecolor: MappableColor = Mappable(
+        depend="color",
+    )
+    edgealpha: MappableFloat = Mappable(
+        1,
+    )
+    edgewidth: MappableFloat = Mappable(
+        0,
+    )
+    edgestyle: MappableFloat = Mappable(
+        "-",
+    )
 
 
 @document_properties
@@ -119,21 +123,35 @@ class Rect(RectBase, Mark):
 class Tile(RectBase, Mark):
     """
     A fill mark representing a tile.
-
-    Examples
-    --------
-    .. include:: ../docstrings/objects.Tile.rst
-
     """
-    color: MappableColor = Mappable("C0", )
-    alpha: MappableFloat = Mappable(1, )
-    fill: MappableBool = Mappable(True, )
-    edgecolor: MappableColor = Mappable(depend="color", )
-    edgealpha: MappableFloat = Mappable(1, )
-    edgewidth: MappableFloat = Mappable(0, )
-    edgestyle: MappableFloat = Mappable("-", )
-    tilewidth: MappableFloat = Mappable(1, )  # width noun is already taken
-    tileheight: MappableFloat = Mappable(1, )
+
+    color: MappableColor = Mappable(
+        "C0",
+    )
+    alpha: MappableFloat = Mappable(
+        1,
+    )
+    fill: MappableBool = Mappable(
+        True,
+    )
+    edgecolor: MappableColor = Mappable(
+        depend="color",
+    )
+    edgealpha: MappableFloat = Mappable(
+        1,
+    )
+    edgewidth: MappableFloat = Mappable(
+        0,
+    )
+    edgestyle: MappableFloat = Mappable(
+        "-",
+    )
+    tilewidth: MappableFloat = Mappable(
+        1,
+    )  # width noun is already taken
+    tileheight: MappableFloat = Mappable(
+        1,
+    )
 
     def _standardize_coordinate_parameters(self, data, resolved, orient):
         # create xmin, xmax, ymin, ymax columns
@@ -146,9 +164,7 @@ class Tile(RectBase, Mark):
 
         return data
 
-
     def _legend_artist(self, variables, value, scales):
-
         keys = {v: value for v in variables}
         resolved = resolve_properties(self, keys, scales)
 

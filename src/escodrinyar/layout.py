@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import io
-
+from .utils import sowraps
+from functools import wraps
 from seaborn.objects import Plot as SeabornPlot
 from seaborn._core.typing import (
     DataSource,
@@ -13,34 +14,84 @@ from seaborn.objects import Mark, Stat, Move
 from typing import Any, Callable
 import base64
 
-import seaborn as sns
 
 class Layout:
+    """
+    An interface for declaratively specifying the layout for multiple plots.
+    """
+
     def __init__(self, layout):
         self.layout: list[list] = layout
         _ = self.opts()
+        self.fig: mpl.figure.Figure | None = None
 
     def __add__(self, other):
+        """
+        Add a plot in the same row as the current layout.
+
+        Parameters
+        ----------
+        other: Plot | Layout
+            The plot or layout to add.
+
+        Returns
+        -------
+        Layout
+            The layout with the added plot.
+
+        Examples
+        --------
+        .. include:: ../docstrings/Layout.__add__.rst
+
+        """
         if isinstance(other, Plot):
             return self + Layout([[other]])
         else:
             return Layout([self.layout[0] + other.layout[0]])
 
     def __or__(self, other):
+        """
+        Add a new row to the current layout.
+
+        Parameters
+        ----------
+        other: Plot | Layout
+            The plot or layout to add in the new row.
+
+        Returns
+        -------
+        Layout
+            The layout with the added row.
+
+        Examples
+        --------
+        .. include:: ../docstrings/Layout.__or__.rst
+
+        """
         if isinstance(other, Plot):
             return self | Layout([[other]])
         else:
             return Layout([*self.layout, *other.layout])
 
-    def show(self):
-        fig = self.plot()
-        plt.show(fig)
+    @sowraps(SeabornPlot.show)
+    def show(self, **kwargs):
+        if self.fig is None or self.fig.__class__ == mpl.figure.Figure:
+            plt.close(self.fig)
+            self.plot(pyplot=True)
+        plt.show(**kwargs)
 
+    @sowraps(SeabornPlot.save)
     def save(self, loc, **kwargs):
-        fig = self.plot()
-        fig.savefig(loc, **kwargs)
+        if self.fig is None:
+            _ = self.plot()
+        self.fig.savefig(loc, **kwargs)
+        # plt.close(fig)
 
-    def plot(self):
+    @sowraps(SeabornPlot.plot)
+    def plot(self, pyplot=False):
+        if self.fig is not None:
+            plt.close(self.fig)
+
         nrows = len(self.layout)
         ncols = -1
         for row in self.layout:
@@ -48,42 +99,63 @@ class Layout:
                 ncols = len(row)
 
         # create a gridspec
-        with plt.ioff():
+        if pyplot is False:
+            fig = mpl.figure.Figure(constrained_layout=True, figsize=self.figsize)
+        else:
             fig = plt.figure(constrained_layout=True, figsize=self.figsize)
 
+        gs = fig.add_gridspec(
+            nrows,
+            ncols,
+            width_ratios=self.width_ratios,
+            height_ratios=self.height_ratios,
+        )
 
-            gs = fig.add_gridspec(
-                nrows,
-                ncols,
-                width_ratios=self.width_ratios,
-                height_ratios=self.height_ratios
-            )
+        for i, row in enumerate(self.layout):
+            plot_ncols = ncols // len(row)
+            for j, plot in enumerate(row):
+                sfig = fig.add_subfigure(
+                    gs[i, j * plot_ncols : (j + 1) * plot_ncols]
+                )
+                with mpl.rc_context(plot.rc_params):
+                    legend_j = plot.splot.on(sfig).plot()
+                    make_legend(sfig, legend_j._legend_contents)
 
-            for i, row in enumerate(self.layout):
-                plot_ncols = ncols // len(row)
-                for j, plot in enumerate(row):
-                    sfig = fig.add_subfigure(gs[i, j * plot_ncols:(j + 1) * plot_ncols])
-                    with mpl.rc_context(plot.rc_params):
-                        l = plot.splot.on(sfig).plot()
-                        make_legend(sfig, l._legend_contents)
+        fig.legends = []
 
-
-            fig.legends = []
-
-            return fig
+        self.fig = fig
+        return self
 
     def _repr_png_(self):
-        fig = self.plot()
+        if self.fig is None:
+            _ = self.plot()
         buffer = io.BytesIO()
-        fig.savefig(buffer, format="png")
+        self.fig.savefig(buffer, format="png")
         buffer.seek(0)
         image = buffer.getvalue()
         buffer.close()
-        graphic = base64.b64encode(image).decode('utf-8')
-        plt.close(fig)
+        graphic = base64.b64encode(image).decode("utf-8")
+        # plt.close(fig)
         return graphic
 
     def opts(self, figsize=(5, 5), width_ratios=None, height_ratios=None):
+        """
+        Set the layout options for the plots.
+
+        Parameters
+        ----------
+        figsize: tuple
+            The size of the figure. Default is (5, 5).
+        width_ratios: list
+            The relative widths of the columns. Default is None.
+        height_ratios:
+            The relative heights of the rows. Default is None.
+
+        Returns
+        -------
+        Layout
+            The layout with the specified options.
+        """
         self.figsize = figsize
         self.width_ratios = width_ratios
         self.height_ratios = height_ratios
@@ -91,13 +163,18 @@ class Layout:
         return self
 
 
+class Plot:
+    """
+    An interface for declaratively specifying statistical graphics.
+    """
 
-class Plot():
-    def __init__(self,
-                 splot: SeabornPlot = None,
-                 *args,
-                 data: DataSource = None,
-                 **variables: VariableSpec):
+    def __init__(
+        self,
+        splot: SeabornPlot = None,
+        *args,
+        data: DataSource = None,
+        **variables: VariableSpec,
+    ):
         if splot is None:
             splot = SeabornPlot(*args, data=data, **variables)
         self.splot = splot
@@ -130,6 +207,7 @@ class Plot():
     def _repr_png_(self):
         return Layout([[self]])._repr_png_()
 
+    @sowraps(SeabornPlot.add)
     def add(
         self,
         mark: Mark,
@@ -140,61 +218,77 @@ class Plot():
         data: DataSource = None,
         **variables: VariableSpec,
     ):
-        plot = Plot(self.splot.add(mark, *transforms, orient=orient, legend=legend, label=label, data=data, **variables))
+        plot = Plot(
+            self.splot.add(
+                mark,
+                *transforms,
+                orient=orient,
+                legend=legend,
+                label=label,
+                data=data,
+                **variables,
+            )
+        )
         plot.rc_params = self.rc_params
         return plot
 
-    def theme(
-            self,
-            config: dict[str, Any]
-    ):
+    @sowraps(SeabornPlot.theme)
+    def theme(self, config: dict[str, Any]):
         plot = Plot(self.splot.theme(self.rc_params))
         plot.rc_params = {**self.rc_params, **config}
         return plot
 
+    @sowraps(SeabornPlot.facet)
     def facet(
-            self,
-            col: VariableSpec = None,
-            row: VariableSpec = None,
-            order: OrderSpec | dict[str, OrderSpec] = None,
-            wrap: int | None = None,
+        self,
+        col: VariableSpec = None,
+        row: VariableSpec = None,
+        order: OrderSpec | dict[str, OrderSpec] = None,
+        wrap: int | None = None,
     ):
         plot = Plot(self.splot.facet(col, row, order, wrap))
         plot.rc_params = self.rc_params
         return plot
 
+    @sowraps(SeabornPlot.pair)
     def pair(
-            self,
-            x: VariableSpecList = None,
-            y: VariableSpecList = None,
-            wrap: int | None = None,
-            cross: bool = True,
-             ):
+        self,
+        x: VariableSpecList = None,
+        y: VariableSpecList = None,
+        wrap: int | None = None,
+        cross: bool = True,
+    ):
         plot = Plot(self.splot.pair(x, y, wrap, cross))
         plot.rc_params = self.rc_params
         return plot
 
-    def label(self, *,
+    @sowraps(SeabornPlot.label)
+    def label(
+        self,
+        *,
         title: str | None = None,
         legend: str | None = None,
-        **variables: str | Callable[[str], str]):
+        **variables: str | Callable[[str], str],
+    ):
         plot = Plot(self.splot.label(title=title, legend=legend, **variables))
         plot.rc_params = self.rc_params
         return plot
 
+    @sowraps(SeabornPlot.plot)
+    def plot(self, pyplot=False):
+        return Layout([[self]]).plot(pyplot=pyplot)
 
-    # Layout methods for Plot
-    def plot(self):
-        return Layout([[self]]).plot()
-
+    @sowraps(SeabornPlot.show)
     def show(self):
         return Layout([[self]]).show()
 
+    @sowraps(SeabornPlot.save)
     def save(self, loc, **kwargs):
         return Layout([[self]]).save(loc, **kwargs)
 
-    def opts(self, figsize=(5, 5)):
-        return Layout([[self]]).opts(figsize)
+    @wraps(Layout.opts)
+    def opts(self, figsize=(5, 5), width_ratios=None, height_ratios=None):
+        return Layout([[self]]).opts(figsize, width_ratios, height_ratios)
 
 
 def make_legend(sfig, legend_contents):
@@ -221,16 +315,15 @@ def make_legend(sfig, legend_contents):
 
     base_legend = None
     for (name, _), (handles, labels) in merged_contents.items():
-
         legend = mpl.legend.Legend(
             ax,
             handles,  # type: ignore  # matplotlib/issues/26639
             labels,
-            title=name
+            title=name,
         )
 
         if base_legend:
-            # Matplotlib has no public API for this so it is a bit of a hack.
+            # Matplotlib has no public API for this, so it is a bit of a hack.
             # Ideally we'd define our own legend class with more flexibility,
             # but that is a lot of work!
             base_legend_box = base_legend.get_children()[0]
