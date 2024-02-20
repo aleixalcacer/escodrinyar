@@ -1,9 +1,7 @@
-from typing import Any, Callable
-
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import io
-import base64
+
 from seaborn.objects import Plot as SeabornPlot
 from seaborn._core.typing import (
     DataSource,
@@ -12,7 +10,8 @@ from seaborn._core.typing import (
     OrderSpec,
 )
 from seaborn.objects import Mark, Stat, Move
-import matplotlib.gridspec as gridspec
+from typing import Any, Callable
+import base64
 
 
 class Layout:
@@ -33,8 +32,15 @@ class Layout:
         else:
             return Layout([*self.layout, *other.layout])
 
-    def _repr_png_(self):
+    def show(self):
+        fig = self.plot()
+        plt.show(fig)
 
+    def save(self, loc, **kwargs):
+        fig = self.plot()
+        fig.savefig(loc, **kwargs)
+
+    def plot(self):
         nrows = len(self.layout)
         ncols = -1
         for row in self.layout:
@@ -42,39 +48,55 @@ class Layout:
                 ncols = len(row)
 
         # create a gridspec
-        fig = plt.figure(constrained_layout=True, figsize=self.figsize)
-        gs = fig.add_gridspec(nrows, ncols)
+        with plt.ioff():
+            fig = plt.figure(constrained_layout=True, figsize=self.figsize)
 
-        for i, row in enumerate(self.layout):
-            plot_ncols = ncols // len(row)
-            for j, plot in enumerate(row):
-                sfig = fig.add_subfigure(gs[i, j * plot_ncols:(j + 1) * plot_ncols])
-                with mpl.rc_context(plot.rc_params):
-                    l = plot.splot.on(sfig).plot()
-                    legend = l._legend_contents
+            gs = fig.add_gridspec(
+                nrows,
+                ncols,
+                width_ratios=self.width_ratios,
+                height_ratios=self.height_ratios
+            )
 
-                    sfig.legends = []
+            for i, row in enumerate(self.layout):
+                plot_ncols = ncols // len(row)
+                for j, plot in enumerate(row):
+                    sfig = fig.add_subfigure(gs[i, j * plot_ncols:(j + 1) * plot_ncols])
+                    with mpl.rc_context(plot.rc_params):
+                        l = plot.splot.on(sfig).plot()
+                        legend = l._legend_contents
 
-        fig.legends = []
+                        sfig.legends = []
 
-        # fig.tight_layout()
+            fig.legends = []
 
+            return fig
+
+    def _repr_png_(self):
+        return self._repr_('png')
+
+    def _repr_svg_(self):
+        return self._repr_('svg')
+
+    def _repr_(self, format: str = 'png'):
+        fig = self.plot()
         buffer = io.BytesIO()
-        fig.savefig(buffer, format='png')
+        fig.savefig(buffer, format=format)
         buffer.seek(0)
-        image_png = buffer.getvalue()
+        image = buffer.getvalue()
         buffer.close()
-        graphic = base64.b64encode(image_png)
-        graphic = graphic.decode('utf-8')
+        graphic = base64.b64encode(image).decode('utf-8')
         plt.close(fig)
-
         return graphic
 
-    def opts(self, ncols=-1, figsize=(5, 5)):
-        self.ncols = ncols
+
+    def opts(self, figsize=(5, 5), width_ratios=None, height_ratios=None):
         self.figsize = figsize
+        self.width_ratios = width_ratios
+        self.height_ratios = height_ratios
 
         return self
+
 
 
 class Plot():
@@ -114,6 +136,10 @@ class Plot():
 
     def _repr_png_(self):
         return Layout([[self]])._repr_png_()
+
+    def _repr_svg_(self):
+        return Layout([[self]])._repr_svg_()
+
 
     def add(
         self,
@@ -166,3 +192,17 @@ class Plot():
         plot = Plot(self.splot.label(title=title, legend=legend, **variables))
         plot.rc_params = self.rc_params
         return plot
+
+
+    # Layout methods for Plot
+    def plot(self):
+        return Layout([[self]]).plot()
+
+    def show(self):
+        return Layout([[self]]).show()
+
+    def save(self, loc, **kwargs):
+        return Layout([[self]]).save(loc, **kwargs)
+
+    def opts(self, figsize=(5, 5)):
+        return Layout([[self]]).opts(figsize)
