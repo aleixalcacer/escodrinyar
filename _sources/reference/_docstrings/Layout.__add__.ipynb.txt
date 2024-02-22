@@ -53,6 +53,15 @@
    "metadata": {},
    "outputs": [],
    "source": [
+    "points + chull"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
     "(points + chull).opts(\n",
     "    figsize=(10, 5)\n",
     ")"

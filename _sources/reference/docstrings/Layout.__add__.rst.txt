@@ -32,6 +32,17 @@
 
 .. code:: ipython3
 
+    points + chull
+
+
+
+
+.. image:: Layout.__add___files/Layout.__add___3_0.png
+
+
+
+.. code:: ipython3
+
     (points + chull).opts(
         figsize=(10, 5)
     )
@@ -39,7 +50,7 @@
 
 
 
-.. image:: Layout.__add___files/Layout.__add___3_0.png
+.. image:: Layout.__add___files/Layout.__add___4_0.png
 
 
 
