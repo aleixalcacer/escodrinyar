@@ -57,6 +57,13 @@
     "    figsize=(10, 5)\n",
     ")"
    ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
   }
  ],
  "metadata": {
