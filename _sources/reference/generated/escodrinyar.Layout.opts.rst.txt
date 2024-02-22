@@ -1,0 +1,6 @@
+escodrinyar.Layout.opts
+=======================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Layout.opts

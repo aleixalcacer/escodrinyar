@@ -1,0 +1,44 @@
+.. code:: ipython3
+
+    import escodrinyar as sc
+    import seaborn.objects as so
+    import seaborn as sns
+
+.. code:: ipython3
+
+    penguins = sns.load_dataset("penguins")
+
+.. code:: ipython3
+
+    points = (
+        sc.Plot(
+            data=penguins,
+            x="flipper_length_mm",
+            y="bill_length_mm",
+            color="species"
+        )
+        .add(so.Dot())
+    )
+    
+    chull = (
+        sc.Plot(
+            data=penguins,
+            x="flipper_length_mm",
+            y="bill_length_mm",
+            color="species"
+        )
+        .add(sc.ConvexHull(edgewidth=1))
+    )
+
+.. code:: ipython3
+
+    (points + chull).opts(
+        figsize=(10, 5)
+    )
+
+
+
+
+.. image:: Layout.__add___files/Layout.__add___3_0.png
+
+

@@ -1,0 +1,6 @@
+﻿escodrinyar.ConvexHull
+======================
+
+.. currentmodule:: escodrinyar
+
+.. autoclass:: ConvexHull

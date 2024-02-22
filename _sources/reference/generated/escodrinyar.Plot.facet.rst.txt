@@ -1,0 +1,6 @@
+escodrinyar.Plot.facet
+======================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Plot.facet

@@ -1,0 +1,6 @@
+﻿escodrinyar.Agg2d
+=================
+
+.. currentmodule:: escodrinyar
+
+.. autoclass:: Agg2d

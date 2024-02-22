@@ -1,0 +1,6 @@
+escodrinyar.Layout.show
+=======================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Layout.show

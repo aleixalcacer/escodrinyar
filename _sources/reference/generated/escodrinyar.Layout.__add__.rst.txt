@@ -1,0 +1,6 @@
+escodrinyar.Layout.\_\_add\_\_
+==============================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Layout.__add__

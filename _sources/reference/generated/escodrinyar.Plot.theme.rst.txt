@@ -1,0 +1,6 @@
+escodrinyar.Plot.theme
+======================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Plot.theme

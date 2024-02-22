@@ -1,0 +1,6 @@
+escodrinyar.Plot.opts
+=====================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Plot.opts

@@ -1,0 +1,6 @@
+﻿escodrinyar.Tile
+================
+
+.. currentmodule:: escodrinyar
+
+.. autoclass:: Tile

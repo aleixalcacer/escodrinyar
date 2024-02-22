@@ -1,0 +1,6 @@
+escodrinyar.Layout.\_\_or\_\_
+=============================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Layout.__or__

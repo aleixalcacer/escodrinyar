@@ -1,0 +1,6 @@
+﻿escodrinyar.Polygon
+===================
+
+.. currentmodule:: escodrinyar
+
+.. autoclass:: Polygon

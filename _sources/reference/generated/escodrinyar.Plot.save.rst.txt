@@ -1,0 +1,6 @@
+escodrinyar.Plot.save
+=====================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Plot.save

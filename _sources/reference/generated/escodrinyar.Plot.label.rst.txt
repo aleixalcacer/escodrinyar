@@ -1,0 +1,6 @@
+escodrinyar.Plot.label
+======================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Plot.label

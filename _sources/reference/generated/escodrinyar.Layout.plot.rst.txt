@@ -1,0 +1,6 @@
+escodrinyar.Layout.plot
+=======================
+
+.. currentmodule:: escodrinyar
+
+.. automethod:: Layout.plot

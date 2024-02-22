@@ -1,0 +1,6 @@
+﻿escodrinyar.Rect
+================
+
+.. currentmodule:: escodrinyar
+
+.. autoclass:: Rect
