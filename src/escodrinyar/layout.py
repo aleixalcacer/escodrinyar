@@ -10,6 +10,7 @@ from seaborn._core.typing import (
     VariableSpecList,
     OrderSpec,
 )
+from seaborn._core.scales import Scale
 from seaborn.objects import Mark, Stat, Move
 from typing import Any, Callable
 import base64
@@ -118,8 +119,9 @@ class Layout:
                     gs[i, j * plot_ncols : (j + 1) * plot_ncols]
                 )
                 with mpl.rc_context(plot.rc_params):
-                    legend_j = plot.splot.on(sfig).plot()
-                    make_legend(sfig, legend_j._legend_contents)
+                    plot_j = plot.splot.on(sfig).plot()
+                    legend_j = plot_j._legend_contents
+                    make_legend(sfig, legend_j)
 
         fig.legends = []
 
@@ -229,6 +231,12 @@ class Plot:
                 **variables,
             )
         )
+        plot.rc_params = self.rc_params
+        return plot
+
+    @sowraps(SeabornPlot.scale)
+    def scale(self, **scales: Scale):
+        plot = Plot(self.splot.scale(**scales))
         plot.rc_params = self.rc_params
         return plot
 
